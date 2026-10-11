@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rent vs. Buy Housing TCO Planner</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+<div class="max-w-4xl mx-auto px-4 py-8">
+  <h1 class="text-2xl font-bold text-gray-900 mb-1">Rent vs. Buy Housing TCO Planner</h1>
+  <p class="text-sm text-gray-500 mb-6">Compare 20-year total cost of ownership including opportunity cost on down payment.</p>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+    <div class="bg-white rounded-xl shadow p-5">
+      <h2 class="text-base font-semibold text-gray-800 mb-4 text-blue-700">Buying Inputs</h2>
+      <div class="space-y-3">
+        <div><label class="block text-xs font-medium text-gray-600 mb-1" for="homePrice">Home Price ($)</label>
+          <input id="homePrice" type="number" value="500000" class="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1" for="downPct">Down Payment (%)</label>
+          <input id="downPct" type="number" value="20" min="3" max="100" class="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1" for="mortRate">Mortgage Rate (%)</label>
+          <input id="mortRate" type="number" value="6.5" step="0.1" class="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1" for="loanTerm">Loan Term (years)</label>
+          <input id="loanTerm" type="number" value="30" class="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1" for="propTax">Property Tax Rate (%/yr)</label>
+          <input id="propTax" type="number" value="1.2" step="0.1" class="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1" for="maintenance">Maintenance (% of value/yr)</label>
+          <input id="maintenance" type="number" value="1.0" step="0.1" class="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1" for="hoa">HOA ($/month)</label>
+          <input id="hoa" type="number" value="200" class="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1" for="appreciation">Annual Home Appreciation (%)</label>
+          <input id="appreciation" type="number" value="3.5" step="0.1" class="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm"></div>
+      </div>
+    </div>
+    <div class="bg-white rounded-xl shadow p-5">
+      <h2 class="text-base font-semibold text-gray-800 mb-4 text-green-700">Renting Inputs</h2>
+      <div class="space-y-3">
+        <div><label class="block text-xs font-medium text-gray-600 mb-1" for="monthlyRent">Monthly Rent ($)</label>
+          <input id="monthlyRent" type="number" value="2500" class="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1" for="rentIncrease">Annual Rent Increase (%)</label>
+          <input id="rentIncrease" type="number" value="3.0" step="0.1" class="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1" for="rentersInsurance">Renter's Insurance ($/month)</label>
+          <input id="rentersInsurance" type="number" value="30" class="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm"></div>
+      </div>
+      <h2 class="text-base font-semibold text-gray-800 mt-5 mb-4 text-purple-700">Shared Assumptions</h2>
+      <div class="space-y-3">
+        <div><label class="block text-xs font-medium text-gray-600 mb-1" for="investReturn">Investment Return Rate (%/yr)</label>
+          <input id="investReturn" type="number" value="7.0" step="0.1" class="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm"></div>
+        <div><label class="block text-xs font-medium text-gray-600 mb-1" for="horizon">Time Horizon (years)</label>
+          <input id="horizon" type="number" value="20" min="1" max="30" class="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm"></div>
+      </div>
+      <button onclick="calculate()" class="mt-5 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl transition">Compare</button>
+    </div>
+  </div>
+
+  <div id="results" class="hidden space-y-6">
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="summaryCards"></div>
+
+    <div class="bg-white rounded-xl shadow p-4">
+      <h2 class="text-base font-semibold text-gray-800 mb-3">Monthly Payment Breakdown (Year 1)</h2>
+      <div id="monthlyBreakdown" class="grid grid-cols-2 sm:grid-cols-4 gap-3"></div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow p-4">
+      <h2 class="text-base font-semibold text-gray-800 mb-3">Cumulative Cost Comparison</h2>
+      <svg id="costSvg" class="w-full" height="250"></svg>
+    </div>
+
+    <div class="bg-white rounded-xl shadow p-4">
+      <h2 class="text-base font-semibold text-gray-800 mb-3">Net Worth Comparison</h2>
+      <svg id="networthSvg" class="w-full" height="250"></svg>
+    </div>
+  </div>
+</div>
+
+<script>
+function fmt(n) { return '$' + Math.round(n).toLocaleString(); }
+
+function calculate() {
+  const homePrice = parseFloat(document.getElementById('homePrice').value) || 500000;
+  const downPct = parseFloat(document.getElementById('downPct').value) / 100 || 0.2;
+  const mortRate = parseFloat(document.getElementById('mortRate').value) / 100 || 0.065;
+  const loanTerm = parseInt(document.getElementById('loanTerm').value) || 30;
+  const propTaxRate = parseFloat(document.getElementById('propTax').value) / 100 || 0.012;
+  const maintRate = parseFloat(document.getElementById('maintenance').value) / 100 || 0.01;
+  const hoaMonthly = parseFloat(document.getElementById('hoa').value) || 200;
+  const appreciation = parseFloat(document.getElementById('appreciation').value) / 100 || 0.035;
+  const monthlyRent = parseFloat(document.getElementById('monthlyRent').value) || 2500;
+  const rentIncrease = parseFloat(document.getElementById('rentIncrease').value) / 100 || 0.03;
+  const rentersIns = parseFloat(document.getElementById('rentersInsurance').value) || 30;
+  const investReturn = parseFloat(document.getElementById('investReturn').value) / 100 || 0.07;
+  const horizon = parseInt(document.getElementById('horizon').value) || 20;
+
+  const downPayment = homePrice * downPct;
+  const loanAmount = homePrice - downPayment;
+  const monthlyRate = mortRate / 12;
+  const numPayments = loanTerm * 12;
+  const monthlyMort = loanAmount * monthlyRate * Math.pow(1 + monthlyRate, numPayments) / (Math.pow(1 + monthlyRate, numPayments) - 1);
+
+  // Buy cumulative costs year by year
+  const buyCosts = [0], rentCosts = [0];
+  const buyNetworth = [0], rentNetworth = [0];
+  let buyTotal = downPayment; // include down payment as initial outlay
+  let rentTotal = 0;
+  let currentHomeValue = homePrice;
+  let rentPortfolio = downPayment; // renter invests down payment + delta
+  let loanBalance = loanAmount;
+  let currentRent = monthlyRent;
+
+  const yr1Breakdown = { mortgage: monthlyMort, propTax: homePrice * propTaxRate / 12, maintenance: homePrice * maintRate / 12, hoa: hoaMonthly };
+
+  for (let y = 1; y <= horizon; y++) {
+    currentHomeValue *= (1 + appreciation);
+    const yearlyMort = monthlyMort * 12;
+    const yearlyPropTax = currentHomeValue * propTaxRate;
+    const yearlyMaint = currentHomeValue * maintRate;
+    const yearlyHOA = hoaMonthly * 12;
+    const totalBuyCost = yearlyMort + yearlyPropTax + yearlyMaint + yearlyHOA;
+    buyTotal += totalBuyCost;
+    buyCosts.push(buyTotal);
+
+    // Update loan balance
+    for (let m = 0; m < 12; m++) {
+      const interest = loanBalance * monthlyRate;
+      const principal = monthlyMort - interest;
+      loanBalance = Math.max(0, loanBalance - principal);
+    }
+    const buyEquity = currentHomeValue - loanBalance;
+    buyNetworth.push(buyEquity - buyTotal + downPayment); // equity - total costs paid + original investment
+
+    const yearlyRent = currentRent * 12;
+    const yearlyRentersIns = rentersIns * 12;
+    rentTotal += yearlyRent + yearlyRentersIns;
+    rentCosts.push(rentTotal);
+
+    // Renter invests delta (difference between buying costs and rent)
+    const monthlyBuyCost = totalBuyCost / 12;
+    const monthlyRentCost = currentRent + rentersIns;
+    const delta = monthlyBuyCost - monthlyRentCost;
+    rentPortfolio = rentPortfolio * (1 + investReturn) + delta * 12;
+    rentNetworth.push(rentPortfolio - rentTotal);
+
+    currentRent *= (1 + rentIncrease);
+  }
+
+  // Break-even year
+  let breakEvenYear = null;
+  for (let y = 1; y <= horizon; y++) {
+    if (buyNetworth[y] > rentNetworth[y] && breakEvenYear === null) breakEvenYear = y;
+  }
+
+  // Summary cards
+  const cards = [
+    { label: 'Monthly Payment (Yr1)', value: fmt(monthlyMort + yr1Breakdown.propTax + yr1Breakdown.maintenance + yr1Breakdown.hoa), color: 'bg-blue-50 border-blue-200' },
+    { label: `Total Buy Cost (${horizon}yr)`, value: fmt(buyCosts[horizon]), color: 'bg-red-50 border-red-200' },
+    { label: `Total Rent Cost (${horizon}yr)`, value: fmt(rentCosts[horizon]), color: 'bg-green-50 border-green-200' },
+    { label: 'Break-Even Year', value: breakEvenYear ? 'Year ' + breakEvenYear : 'Never (in range)', color: 'bg-purple-50 border-purple-200' },
+  ];
+  const cardsEl = document.getElementById('summaryCards');
+  cardsEl.innerHTML = '';
+  cards.forEach(c => {
+    const div = document.createElement('div');
+    div.className = `rounded-xl border p-3 ${c.color}`;
+    const lbl = document.createElement('div');
+    lbl.className = 'text-xs text-gray-500 font-medium uppercase tracking-wide';
+    lbl.textContent = c.label;
+    const val = document.createElement('div');
+    val.className = 'text-lg font-bold text-gray-900 mt-1';
+    val.textContent = c.value;
+    div.appendChild(lbl); div.appendChild(val);
+    cardsEl.appendChild(div);
+  });
+
+  // Monthly breakdown
+  const mbEl = document.getElementById('monthlyBreakdown');
+  mbEl.innerHTML = '';
+  const breakdown = [
+    { label: 'Mortgage P+I', value: monthlyMort, color: 'bg-blue-50' },
+    { label: 'Property Tax', value: yr1Breakdown.propTax, color: 'bg-yellow-50' },
+    { label: 'Maintenance', value: yr1Breakdown.maintenance, color: 'bg-orange-50' },
+    { label: 'HOA', value: yr1Breakdown.hoa, color: 'bg-purple-50' },
+  ];
+  breakdown.forEach(b => {
+    const div = document.createElement('div');
+    div.className = `rounded-lg p-3 ${b.color}`;
+    const lbl = document.createElement('div');
+    lbl.className = 'text-xs text-gray-500';
+    lbl.textContent = b.label;
+    const val = document.createElement('div');
+    val.className = 'text-sm font-bold text-gray-800 mt-1';
+    val.textContent = fmt(b.value) + '/mo';
+    div.appendChild(lbl); div.appendChild(val);
+    mbEl.appendChild(div);
+  });
+
+  drawLineChart('costSvg', [{label:'Buy',data:buyCosts,color:'#3b82f6'},{label:'Rent',data:rentCosts,color:'#10b981'}], 'Cumulative Cost ($)', horizon);
+  drawLineChart('networthSvg', [{label:'Buy Net Worth',data:buyNetworth,color:'#3b82f6'},{label:'Rent Net Worth',data:rentNetworth,color:'#10b981'}], 'Net Worth ($)', horizon);
+  document.getElementById('results').classList.remove('hidden');
+}
+
+function drawLineChart(svgId, series, yLabel, horizon) {
+  const svgEl = document.getElementById(svgId);
+  const W = svgEl.clientWidth || 600;
+  const H = 250;
+  svgEl.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svgEl.innerHTML = '';
+  const pad = {l:70,r:15,t:20,b:35};
+  const ns = tag => document.createElementNS('http://www.w3.org/2000/svg', tag);
+
+  const allVals = series.flatMap(s => s.data);
+  const yMin = Math.min(...allVals);
+  const yMax = Math.max(...allVals);
+  const yRange = yMax - yMin || 1;
+  const sx = i => pad.l + i / horizon * (W - pad.l - pad.r);
+  const sy = v => pad.t + (1 - (v - yMin) / yRange) * (H - pad.t - pad.b);
+
+  // Grid lines
+  const gridSteps = 5;
+  for (let i = 0; i <= gridSteps; i++) {
+    const v = yMin + (yMax - yMin) * i / gridSteps;
+    const y = sy(v);
+    const gl = ns('line'); gl.setAttribute('x1',pad.l); gl.setAttribute('x2',W-pad.r);
+    gl.setAttribute('y1',y); gl.setAttribute('y2',y);
+    gl.setAttribute('stroke','#f3f4f6'); gl.setAttribute('stroke-width','1');
+    svgEl.appendChild(gl);
+    const t = ns('text'); t.setAttribute('x',pad.l-4); t.setAttribute('y',y+4);
+    t.setAttribute('text-anchor','end'); t.setAttribute('font-size','9'); t.setAttribute('fill','#9ca3af');
+    t.textContent = (v/1000).toFixed(0) + 'k';
+    svgEl.appendChild(t);
+  }
+
+  // X axis ticks
+  for (let y = 0; y <= horizon; y += 5) {
+    const t = ns('text'); t.setAttribute('x',sx(y)); t.setAttribute('y',H-pad.b+14);
+    t.setAttribute('text-anchor','middle'); t.setAttribute('font-size','9'); t.setAttribute('fill','#9ca3af');
+    t.textContent = 'Yr ' + y;
+    svgEl.appendChild(t);
+  }
+
+  // Series
+  series.forEach((s, si) => {
+    const pts = s.data.map((v, i) => `${sx(i).toFixed(1)},${sy(v).toFixed(1)}`).join(' ');
+    const poly = ns('polyline'); poly.setAttribute('points', pts);
+    poly.setAttribute('fill','none'); poly.setAttribute('stroke',s.color); poly.setAttribute('stroke-width','2.5');
+    svgEl.appendChild(poly);
+
+    // Legend
+    const rect = ns('rect'); rect.setAttribute('x',W-80); rect.setAttribute('y',pad.t+si*18);
+    rect.setAttribute('width',12); rect.setAttribute('height',4); rect.setAttribute('fill',s.color);
+    svgEl.appendChild(rect);
+    const t = ns('text'); t.setAttribute('x',W-64); t.setAttribute('y',pad.t+si*18+4);
+    t.setAttribute('font-size','9'); t.setAttribute('fill','#4b5563');
+    t.textContent = s.label;
+    svgEl.appendChild(t);
+  });
+
+  // Zero line if applicable
+  if (yMin < 0 && yMax > 0) {
+    const zl = ns('line'); zl.setAttribute('x1',pad.l); zl.setAttribute('x2',W-pad.r);
+    zl.setAttribute('y1',sy(0)); zl.setAttribute('y2',sy(0));
+    zl.setAttribute('stroke','#d1d5db'); zl.setAttribute('stroke-width','1.5');
+    svgEl.appendChild(zl);
+  }
+}
+
+calculate();
+</script>
+</body>
+</html>
